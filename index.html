@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ILTM Cannes 2026 Exhibitors</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px;color:#222}
+.container{max-width:900px;margin:auto}
+h1{color:#123d6a}
+.card{background:white;padding:18px;border-radius:12px;margin:15px 0;box-shadow:0 2px 8px #ddd}
+input,textarea,button{width:100%;padding:12px;margin:7px 0;box-sizing:border-box;border-radius:8px;border:1px solid #ccc;font-size:16px}
+button{background:#123d6a;color:white;border:0;font-weight:bold}
+button.secondary{background:#198754}
+table{width:100%;border-collapse:collapse;background:white}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+.small{color:#666;font-size:14px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>ILTM Cannes 2026</h1>
+<p>Exhibitor Collector & CRM</p>
+
+<div class="card">
+<h3>Ajouter un exposant</h3>
+<input id="name" placeholder="Nom de l'entreprise">
+<input id="country" placeholder="Pays">
+<input id="website" placeholder="Site web">
+<input id="email" placeholder="Email">
+<input id="contact" placeholder="Contact">
+<textarea id="notes" placeholder="Notes"></textarea>
+<button onclick="add()">Ajouter l'exposant</button>
+</div>
+
+<div class="card">
+<h3>Collecte & Export</h3>
+<p id="count">0 exposants</p>
+<input id="search" placeholder="Rechercher..." oninput="render()">
+<button class="secondary" onclick="exportCSV()">Exporter CSV</button>
+<button onclick="clearData()">Effacer toutes les données</button>
+</div>
+
+<div class="card">
+<h3>Liste des exposants</h3>
+<div style="overflow:auto">
+<table>
+<thead><tr><th>Entreprise</th><th>Pays</th><th>Site</th><th>Email</th></tr></thead>
+<tbody id="list"></tbody>
+</table>
+</div>
+</div>
+</div>
+
+<script>
+let exhibitors=JSON.parse(localStorage.getItem("iltm_exhibitors")||"[]");
+
+function save(){
+localStorage.setItem("iltm_exhibitors",JSON.stringify(exhibitors));
+render();
+}
+
+function add(){
+let name=document.getElementById("name").value.trim();
+if(!name){alert("Entrez le nom de l'entreprise");return;}
+exhibitors.push({
+name,
+country:document.getElementById("country").value,
+website:document.getElementById("website").value,
+email:document.getElementById("email").value,
+contact:document.getElementById("contact").value,
+notes:document.getElementById("notes").value
+});
+["name","country","website","email","contact","notes"].forEach(id=>document.getElementById(id).value="");
+save();
+}
+
+function render(){
+let q=document.getElementById("search").value.toLowerCase();
+let filtered=exhibitors.filter(x=>
+Object.values(x).join(" ").toLowerCase().includes(q));
+document.getElementById("count").innerText=exhibitors.length+" exposants enregistrés";
+document.getElementById("list").innerHTML=filtered.map(x=>
+`<tr>
+<td>${escapeHTML(x.name)}</td>
+<td>${escapeHTML(x.country)}</td>
+<td>${escapeHTML(x.website)}</td>
+<td>${escapeHTML(x.email)}</td>
+</tr>`).join("");
+}
+
+function escapeHTML(s){
+return String(s||"").replace(/[&<>"']/g,c=>({
+"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[c]));
+}
+
+function exportCSV(){
+let rows=[["Entreprise","Pays","Site","Email","Contact","Notes"],
+...exhibitors.map(x=>[x.name,x.country,x.website,x.email,x.contact,x.notes])];
+let csv=rows.map(r=>r.map(v=>'"'+String(v||"").replace(/"/g,'""')+'"').join(";")).join("\n");
+let blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="ILTM_Cannes_2026_exhibitors.csv";
+a.click();
+}
+
+function clearData(){
+if(confirm("Effacer tous les exposants enregistrés ?")){
+exhibitors=[];
+save();
+}
+}
+
+render();
+</script>
+</body>
+</html>
